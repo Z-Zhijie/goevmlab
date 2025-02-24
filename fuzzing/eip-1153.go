@@ -66,12 +66,14 @@ func fillTstore(gst *GstMaker, fork string) {
 	}
 	for _, addr := range addrs {
 		gst.AddAccount(addr, GenesisAccount{
+			// in these tests, i can get the code for a contract
+			// seems i only need to deploy the code to the test network and call
 			Code:    RandCallTStore(allAddrs),
 			Balance: new(big.Int),
 			Storage: RandStorage(15, 20),
 		})
 	}
-	// The transaction
+	// The transaction to call the contract, i.e., call the code
 	{
 		tx := &StTransaction{
 			// 8M gaslimit
