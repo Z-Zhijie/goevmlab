@@ -387,11 +387,17 @@ func testFnFromGenerator(fn GeneratorFn, name, location string) TestProviderFn {
 
 type GeneratorFn func() *fuzzing.GstMaker
 
+// generatorFn is the factory() function that returns func() that creates a new GstMaker and run fuzzing
 func GenerateAndExecute(c *cli.Context, generatorFn GeneratorFn, name string) error {
+	// fn is a function that
+	// 1. run the factory() to return a func() that generate gst and run fuzzing
+	// 2. store the gst to disk
 	fn := testFnFromGenerator(generatorFn, name, c.String(LocationFlag.Name))
+	// Executes with fn
 	return ExecuteFuzzer(c, false, fn, true)
 }
 
+// providerFn is the fn() function above
 func ExecuteFuzzer(c *cli.Context, allClients bool, providerFn TestProviderFn, cleanupFiles bool) error {
 	var (
 		vms        = InitVMs(c)
@@ -415,6 +421,11 @@ func ExecuteFuzzer(c *cli.Context, allClients bool, providerFn TestProviderFn, c
 		notifyTopic:         c.String(NotifyFlag.Name),
 	}
 	// Routines to deliver tests
+	// run the providerFn, i.e. the fn
+	// fn is a function that
+	// 1. using factory to generate gst
+	// 2. run the fuzzing
+	// 3. store the gst to file
 	meta.startTestFactories((numThreads+1)/2, providerFn)
 	meta.wg.Add(1)
 	ctx, cancel := context.WithCancel(context.Background())
@@ -619,6 +630,7 @@ func (l *lineCountingHasher) Reset() {
 	l.lines = 0
 }
 
+// 1. run vm.stateTest
 func (meta *testMeta) vmLoop(evm evms.Evm, taskCh, resultCh chan *task) {
 	defer meta.wg.Done()
 	var hasher = newLineCountingHasher()
@@ -733,6 +745,7 @@ func (meta *testMeta) fuzzingLoop(skipTrace bool, clientCount int) {
 		var taskCh = make(chan *task)
 		taskChannels = append(taskChannels, taskCh)
 		meta.wg.Add(1)
+		// 1. run vm.stateTest
 		go meta.vmLoop(vm, taskCh, resultCh)
 		ready = append(ready, i)
 	}
@@ -792,6 +805,7 @@ func (meta *testMeta) fuzzingLoop(skipTrace bool, clientCount int) {
 		testIndex++
 		// First, make sure we have N clients to execute the test on
 		if clientsNeeded := clientCount - len(ready); clientsNeeded > 0 {
+			// seem to print failed statetest
 			readResults(clientsNeeded)
 		}
 		if meta.abort.Load() {

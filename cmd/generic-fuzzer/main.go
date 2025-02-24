@@ -92,6 +92,8 @@ func startFuzzer(ctx *cli.Context) (err error) {
 	}
 	var factory common.GeneratorFn
 	if len(fNames) == 1 {
+		// returns a factory func() *fuzzing.GstMaker {}, creates a GST with filler, where the fuzzing tx is
+		// if run the function returned by factory, the fuzzing begins
 		factory = fuzzing.Factory(fNames[0], fork)
 		if factory == nil {
 			return fmt.Errorf("unknown target %v", fNames[0])

@@ -33,7 +33,9 @@ var fillers = map[string]func(*GstMaker, string){
 func Factory(name, fork string) func() *GstMaker {
 	if filler, ok := fillers[name]; ok {
 		return func() *GstMaker {
+			// creates an account
 			gst := BasicStateTest(fork)
+			// make random test / fuzzing
 			filler(gst, fork)
 			return gst
 		}
